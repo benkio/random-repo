@@ -1,0 +1,14 @@
+
+# contries schema
+
+# --- !Ups
+
+CREATE TABLE COUNTRIES AS SELECT * FROM CSVREAD('resources/countries.csv');
+CREATE TABLE AIRPORTS AS SELECT * FROM CSVREAD('resources/airports.csv');
+CREATE TABLE RUNAWAYS AS SELECT * FROM CSVREAD('resources/runways.csv');
+
+# --- !Downs
+
+DROP TABLE COUNTRIES;
+DROP TABLE AIRPORTS;
+DROP TABLE RUNAWAYS;
