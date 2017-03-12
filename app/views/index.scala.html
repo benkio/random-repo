@@ -7,7 +7,9 @@
     <div class="container">
         @query()
         <div class="row">
-            <div id="PageContent"></div>
+            <div id="PageContent">
+                @querySegment(Map(), 2)
+            </div>
         </div>
     </div>
 }

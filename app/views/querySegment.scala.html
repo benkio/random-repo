@@ -1,0 +1,69 @@
+@(queryContent : Map[Airport, Seq[Runaway]], page : Int)
+
+<!-- Copied from http://jsfiddle.net/whytheday/2Dj7Y/11/ -->
+
+<table class="table table-condensed" style="border-collapse:collapse;">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Identification Code</th>
+            <th>Airport Name</th>
+            <th>Airport Type</th>
+            <th>Elevation Ft.</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Country ISO</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        <tr data-toggle="collapse" data-target="#runwayAirport1" class="accordion-toggle">
+            <td>122</td>
+            <td>OAA</td>
+            <td>Example Airport</td>
+            <td>Small Airport</td>
+            <td>122</td>
+            <td>15.50</td>
+            <td>20.84</td>
+        </tr>
+        <tr >
+            <td colspan="6" class="hiddenRow">
+                <div class="accordian-body collapse" id="runwayAirport1">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <td>ID</td>
+                                <td>Length</td>
+                                <td>Width</td>
+                                <td>Surface</td>
+                                <td>Lighted</td>
+                                <td>Closed</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center">
+        <li class="page-item @if(page == 1) { disabled }">
+            <a class="page-link" href="#" tabindex="-1">Previous</a>
+        </li>
+        <li class="page-item @if(queryContent.size < 50){ disabled } ">
+            <a class="page-link" href="#">Next</a>
+        </li>
+    </ul>
+</nav>

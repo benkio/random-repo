@@ -1,3 +1,5 @@
+
+/* search button style */
 .stylish-input-group .input-group-addon{
     background: white !important;
 }
@@ -9,4 +11,14 @@
 .stylish-input-group button{
     border:0;
     background:transparent;
+}
+
+/* airport table style */
+
+.hiddenRow {
+    padding: 0 !important;
+}
+
+.hiddenRow > div {
+    margin-left: 2cm;
 }
