@@ -4,7 +4,7 @@
  * two arguments, a `String` for the title of the page and an `Html`
  * object to insert into the body of the page.
  *@
-@(title: String)(content: Html)
+@(title: String)(content: Html)(implicit request: play.api.mvc.RequestHeader)
 
 <!DOCTYPE html>
 <html lang="en">
@@ -35,7 +35,14 @@
     <body>
         @* And here's where we render the `Html` object containing
          * the page content. *@
-        @content
+        @header()
+        <div  class="container">
+          @content
+          <div class="row">
+              <div id="PageContent">
+              </div>
+          </div>
+        </div>
 
       <script src="@routes.Assets.versioned("javascripts/main.js")" type="text/javascript"></script>
     </body>

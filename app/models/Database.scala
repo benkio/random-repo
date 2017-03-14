@@ -61,6 +61,7 @@ object Database extends Schema {
 
   on(airportsTable) { a => declare {
     a.id is(indexed, unique)
+    a.airport_type is(named("type"))
   }}
   on(runawaysTable) { r => declare {
     r.id is(indexed, unique)
@@ -73,11 +74,14 @@ object Database extends Schema {
   // Perform the following operations
   // 1 - from the country name/code get the country code
   // 2 - fetch the airports/runaways with that country code
-  // 3 - organize all in a map 
+  // 3 - organize all in a map
   def airportRunawayQuery(countryNameOrCode : String, offset: Int, pageLength: Int) : Map[Airport, Seq[Runaway]] = {
-    val countryCode : String = inTransaction { CountryDataAccess.countryByCodeOrName(countryNameOrCode).single }
-    val data = inTransaction { RunawayDataAccess.runawaysInAirport(countryCode, offset, pageLength).toList }
-    data groupBy {_._1} map {
+    val airports = inTransaction {
+      val countryCode = CountryDataAccess.countryByCodeOrName(countryNameOrCode).single
+      AirportDataAccess.airportsByCountryCode(countryCode, offset, pageLength).toList
+    }
+    val runaways = inTransaction { RunawayDataAccess.runawaysInAirport(airports).toList}
+    airports zip runaways groupBy {_._1} map {
       case (a,l) => a -> l.map{case (a,r) => r}
     }
   }
