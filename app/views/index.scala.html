@@ -1,7 +1,21 @@
-@()(implicit request: play.api.mvc.RequestHeader)
+@(querySuggestions : List[String])(implicit request: play.api.mvc.RequestHeader)
 
 <!-- template boostrap for tabs and stuff http://bootsnipp.com/snippets/VEomV  -->
 
 @main("Air Tracker") {
-  @query()
+    @helper.javascriptRouter("jsRoutes")(
+        routes.javascript.HomeController.query
+    )
+
+    <script>
+
+     function queryPage(queryContent, pageNumber){
+         $.ajax(jsRoutes.controllers.HomeController.query(queryContent, pageNumber))
+          .done( function(data) {
+              $("#PageContent").html(data);
+          });
+     };
+
+    </script>
+  @query(querySuggestions)
 }

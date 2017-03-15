@@ -82,7 +82,9 @@ object Database extends Schema {
     }
     val runaways = inTransaction { RunawayDataAccess.runawaysInAirport(airports).toList}
     airports zip runaways groupBy {_._1} map {
-      case (a,l) => a -> l.map{case (a,r) => r}
+      case (a,l) => { a -> l.map{case (a,r) => r} }
     }
   }
+
+  def getAllCountryNames : List[String] = inTransaction { CountryDataAccess.countryAllNames.toList }
 }

@@ -12,4 +12,7 @@ object CountryDataAccess {
     country => where (country.code === codeOrName or country.name === codeOrName) select(country.code)
   }
 
+  def countryAllNames() : Query[String] = from(countryTable) {
+    country => select (country.name)
+  }
 }

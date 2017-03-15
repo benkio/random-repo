@@ -1,28 +1,17 @@
-@()(implicit req: play.api.mvc.RequestHeader)
-
-@helper.javascriptRouter("jsRoutes")(
-    routes.javascript.HomeController.query
-)
-
-<script>
-
- function queryFirstPage(){
-     var queryContent = $("#queryContent").val();
-     $.ajax(jsRoutes.controllers.HomeController.query(queryContent, 1))
-         .done( function(data) {
-             $("#PageContent").html(data);
-         });
- };
-
-</script>
-
+@(querySuggestions : List[String])(implicit req: play.api.mvc.RequestHeader)
 <div class="row">
     <div class="col-sm-6 col-sm-offset-3">
         <div>
             <div class="input-group stylish-input-group">
-                <input id="queryContent" type="text" class="form-control"  placeholder="Search by Country name or Code" >
+                <input id="queryContent" type="text" class="form-control"  placeholder="Search by Country name or Code" list="querySuggestions">
+                <datalist id="querySuggestions">
+                    @for(suggestion <- querySuggestions){
+                        <option value="@suggestion">
+                            }
+                </datalist>
                 <span class="input-group-addon">
-                    <button type="submit" onclick="queryFirstPage()" id="QuerySearchButton">
+                    <button type="submit" onclick="queryPage($('#queryContent').val(), 1)" id="QuerySearchButton">
+
                         <span class="glyphicon glyphicon-search"></span>
                     </button>
                 </span>

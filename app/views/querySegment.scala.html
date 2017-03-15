@@ -1,4 +1,4 @@
-@(queryContent : Map[Airport, Seq[Runaway]], page : Int)
+@(queryContent : Map[Airport, Seq[Runaway]], pageNumber : Int, queryText : String)
 
 <!-- Copied from http://jsfiddle.net/whytheday/2Dj7Y/11/ -->
 
@@ -16,54 +16,62 @@
         </tr>
     </thead>
     <tbody>
-
-        <tr data-toggle="collapse" data-target="#runwayAirport1" class="accordion-toggle">
-            <td>122</td>
-            <td>OAA</td>
-            <td>Example Airport</td>
-            <td>Small Airport</td>
-            <td>122</td>
-            <td>15.50</td>
-            <td>20.84</td>
-        </tr>
-        <tr >
-            <td colspan="6" class="hiddenRow">
-                <div class="accordian-body collapse" id="runwayAirport1">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <td>ID</td>
-                                <td>Length</td>
-                                <td>Width</td>
-                                <td>Surface</td>
-                                <td>Lighted</td>
-                                <td>Closed</td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </td>
-        </tr>
+        @for((c, index) <- queryContent.zipWithIndex){
+            <tr data-toggle="collapse" data-target="#runwayAirport@index" class="accordion-toggle">
+                <td>@c._1.id</td>
+                <td>@c._1.ident</td>
+                <td>@c._1.name</td>
+                <td>@c._1.airport_type</td>
+                <td>@c._1.elevation_ft</td>
+                <td>@c._1.latitude_deg</td>
+                <td>@c._1.longitude_deg</td>
+                <td>@c._1.iso_country</td>
+            </tr>
+            <tr>
+                <td  colspan="6" class="hiddenRow">
+                    <div class="accordian-body collapse" id="runwayAirport@index">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>ID</td>
+                                    <td>Length(ft.)</td>
+                                    <td>Width(ft.)</td>
+                                    <td>Surface</td>
+                                    <td>Lighted</td>
+                                    <td>Closed</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for(r <- c._2){
+                                    <tr>
+                                        <td>@r.id</td>
+                                        <td>@r.length_ft</td>
+                                        <td>@r.width_ft</td>
+                                        <td>@r.surface</td>
+                                        <td>@r.lighted</td>
+                                        <td>@r.closed</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            }
     </tbody>
 </table>
 
 <nav aria-label="Page navigation example">
     <ul class="pagination justify-content-center">
-        <li class="page-item @if(page == 1) { disabled }">
-            <a class="page-link" href="#" tabindex="-1">Previous</a>
+        <li class="page-item @if(pageNumber <= 1) { disabled }">
+            <a class="page-link" id="previousPage" tabindex="-1">Previous</a>
         </li>
         <li class="page-item @if(queryContent.size < 50){ disabled } ">
-            <a class="page-link" href="#">Next</a>
+            <a class="page-link" id="nextPage">Next</a>
         </li>
     </ul>
 </nav>
+<script>
+ $('#previousPage').click(function () { queryPage('@queryText', @pageNumber - 1) });
+ $('#nextPage').click(function () { queryPage('@queryText', @pageNumber + 1 ) });
+</script>
