@@ -24,7 +24,7 @@ class HomeController @Inject() extends Controller {
   }
 
   def query(countryNameOrCode : String, pageNumber : Int) = Action { implicit request =>
-    val airportsAndRunaways = Database.airportRunawayQuery(countryNameOrCode, queryPageLength * pageNumber, queryPageLength)
-    Ok(views.html.querySegment(airportsAndRunaways, pageNumber, countryNameOrCode))
+    val (airportsAndRunaways, airportsCount) = Database.airportRunawayQuery(countryNameOrCode, (queryPageLength - 1) * pageNumber, queryPageLength)
+    Ok(views.html.querySegment(airportsAndRunaways, pageNumber, countryNameOrCode, (airportsCount/queryPageLength)))
   }
 }

@@ -4,11 +4,16 @@ import org.squeryl.PrimitiveTypeMode._
 import org.squeryl.Table
 import org.squeryl.Query
 import collection.Iterable
+import org.squeryl.dsl._
 
 object AirportDataAccess {
   import Database.airportsTable
 
-  def airportsByCountryCode(countryCode : String, offset : Int, pageLength: Int ) = from(airportsTable) {
+  def airportsByCountryCode(countryCode : String, offset : Int, pageLength: Int ) : Query[Airport] = from(airportsTable) {
     airport => where(airport.iso_country === countryCode) select (airport)
   }.page(offset, pageLength)
+
+  def getNumberOfAirportsByCountry(countryCode : String)  = from(airportsTable) {
+    airport => where(airport.iso_country === countryCode) compute(count)
+  }
 }

@@ -75,15 +75,17 @@ object Database extends Schema {
   // 1 - from the country name/code get the country code
   // 2 - fetch the airports/runaways with that country code
   // 3 - organize all in a map
-  def airportRunawayQuery(countryNameOrCode : String, offset: Int, pageLength: Int) : Map[Airport, Seq[Runaway]] = {
-    val airports = inTransaction {
+  // 4 - return it and the number of pages
+  def airportRunawayQuery(countryNameOrCode : String, offset: Int, pageLength: Int) : (Map[Airport, Seq[Runaway]], Int) = {
+    val (airports : List[Airport], airportsCount : Long) = inTransaction {
       val countryCode = CountryDataAccess.countryByCodeOrName(countryNameOrCode).single
-      AirportDataAccess.airportsByCountryCode(countryCode, offset, pageLength).toList
+      val airports = AirportDataAccess.airportsByCountryCode(countryCode, offset, pageLength).toList
+      val airportsCount : Long = AirportDataAccess.getNumberOfAirportsByCountry(countryCode).single.measures
+      (airports, airportsCount)
     }
     val runaways = inTransaction { RunawayDataAccess.runawaysInAirport(airports).toList}
-    airports zip runaways groupBy {_._1} map {
-      case (a,l) => { a -> l.map{case (a,r) => r} }
-    }
+    val airportsWithRunaways = airports zip runaways groupBy {_._1} map { case (a,l) => { a -> l.map{case (a,r) => r} } }
+    (airportsWithRunaways, airportsCount.toInt)
   }
 
   def getAllCountryNames : List[String] = inTransaction { CountryDataAccess.countryAllNames.toList }
