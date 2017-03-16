@@ -13,7 +13,11 @@ object AirportDataAccess {
     airport => where(airport.iso_country === countryCode) select (airport)
   }.page(offset, pageLength)
 
-  def getNumberOfAirportsByCountry(countryCode : String)  = from(airportsTable) {
+  def getNumberOfAirportsByCountry(countryCode : String) : Query[Measures[Long]] = from(airportsTable) {
     airport => where(airport.iso_country === countryCode) compute(count)
+  }
+
+  def getMostAirportDenseCountries(numberOfResult : Int) : Query[GroupWithMeasures[String,Long]] = from(airportsTable) {
+    airport => groupBy(airport.iso_country) compute(count())
   }
 }

@@ -3,7 +3,9 @@ package models
 import org.squeryl.Schema
 import org.squeryl.PrimitiveTypeMode._
 import org.squeryl.Table
-
+import scala.util.Try
+import scala.util.Success
+import scala.util.Failure
 
 case class Country(id             : Int,
                    code           : String,
@@ -77,15 +79,21 @@ object Database extends Schema {
   // 3 - organize all in a map
   // 4 - return it and the number of pages
   def airportRunawayQuery(countryNameOrCode : String, offset: Int, pageLength: Int) : (Map[Airport, Seq[Runaway]], Int) = {
-    val (airports : List[Airport], airportsCount : Long) = inTransaction {
+    val transactionResult : Try[(List[Airport], List[Runaway] ,Long)] = Try(inTransaction {
       val countryCode = CountryDataAccess.countryByCodeOrName(countryNameOrCode).single
       val airports = AirportDataAccess.airportsByCountryCode(countryCode, offset, pageLength).toList
       val airportsCount : Long = AirportDataAccess.getNumberOfAirportsByCountry(countryCode).single.measures
-      (airports, airportsCount)
+      val runaways = RunawayDataAccess.runawaysInAirport(airports).toList
+      (airports ,runaways, airportsCount)
+      })
+
+    transactionResult match {
+      case Success(t) => { //airports, runaways, airportsCount
+        val airportsWithRunaways = t._1 zip t._2 groupBy {_._1} map { case (a,l) => { a -> l.map{case (a,r) => r} } }
+        (airportsWithRunaways, t._3.toInt)
+      }
+      case Failure(_) => return (Map(),1) //default value in case of exception, eg, empty result
     }
-    val runaways = inTransaction { RunawayDataAccess.runawaysInAirport(airports).toList}
-    val airportsWithRunaways = airports zip runaways groupBy {_._1} map { case (a,l) => { a -> l.map{case (a,r) => r} } }
-    (airportsWithRunaways, airportsCount.toInt)
   }
 
   def getAllCountryNames : List[String] = inTransaction { CountryDataAccess.countryAllNames.toList }
