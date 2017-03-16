@@ -96,5 +96,6 @@ object Database extends Schema {
     }
   }
 
-  def getAllCountryNames : List[String] = inTransaction { CountryDataAccess.countryAllNames.toList }
+  // Return all the country names from the table, if something bad happens, return an empty list.
+  def getAllCountryNames : List[String] = Try(inTransaction { CountryDataAccess.countryAllNames.toList }) getOrElse(List())
 }
