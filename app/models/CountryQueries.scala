@@ -5,14 +5,14 @@ import org.squeryl.Table
 import org.squeryl.Query
 import collection.Iterable
 
-object CountryDataAccess {
+object CountryQueries {
   import Database.countryTable
 
   def countryByCodeOrName(codeOrName : String) : Query[String] = from(countryTable) {
     country => where (country.code === codeOrName or country.name === codeOrName) select(country.code)
   }
 
-  def countryAllNames() : Query[String] = from(countryTable) {
-    country => select (country.name)
+  def countryAllCodeAndNames() : Query[(String,String)] = from(countryTable) {
+    country => select (country.code, country.name)
   }
 }

@@ -73,29 +73,18 @@ object Database extends Schema {
     c.code is(unique)
   }}
 
-  // Perform the following operations
-  // 1 - from the country name/code get the country code
-  // 2 - fetch the airports/runaways with that country code
-  // 3 - organize all in a map
-  // 4 - return it and the number of pages
-  def airportRunawayQuery(countryNameOrCode : String, offset: Int, pageLength: Int) : (Map[Airport, Seq[Runaway]], Int) = {
-    val transactionResult : Try[(List[Airport], List[Runaway] ,Long)] = Try(inTransaction {
-      val countryCode = CountryDataAccess.countryByCodeOrName(countryNameOrCode).single
-      val airports = AirportDataAccess.airportsByCountryCode(countryCode, offset, pageLength).toList
-      val airportsCount : Long = AirportDataAccess.getNumberOfAirportsByCountry(countryCode).single.measures
-      val runaways = RunawayDataAccess.runawaysInAirport(airports).toList
-      (airports ,runaways, airportsCount)
-      })
+  def airportRunawayQuery(countryNameOrCode : String, offset: Int, pageLength: Int) : Try[(List[Airport], List[Runaway], Long)] = Try(inTransaction {
+      val countryCode = CountryQueries.countryByCodeOrName(countryNameOrCode).single
+      val airports = AirportQueries.airportsByCountryCode(countryCode, offset, pageLength).toList
+      val airportsCount : Long = AirportQueries.getNumberOfAirportsByCountry(countryCode).single.measures
+      val runaways = RunawayQueries.runawaysInAirport(airports).toList
+//    val airportsWithRunaways = JoinQueries.runawaysInAirport(AirportQueries.airportsByCountryCode(countryCode, offset, pageLength)).toList
 
-    transactionResult match {
-      case Success(t) => { //airports, runaways, airportsCount
-        val airportsWithRunaways = t._1 zip t._2 groupBy {_._1} map { case (a,l) => { a -> l.map{case (a,r) => r} } }
-        (airportsWithRunaways, t._3.toInt)
-      }
-      case Failure(_) => return (Map(),1) //default value in case of exception, eg, empty result
-    }
-  }
+      (airports, runaways, airportsCount)
+   })
 
-  // Return all the country names from the table, if something bad happens, return an empty list.
-  def getAllCountryNames : List[String] = Try(inTransaction { CountryDataAccess.countryAllNames.toList }) getOrElse(List())
+  def getAllCountryCodeAndNames: Try[List[(String,String)]] = Try(inTransaction { CountryQueries.countryAllCodeAndNames.toList})
+
+  def getAirportDenseCountries(numberOfResult : Int, isDesc : Boolean) : Try[List[(String, Long)]] = Try(inTransaction { AirportQueries.getAirportDenseCountries(numberOfResult, isDesc).toList map {t => (t.key, t.measures)} })
+
 }

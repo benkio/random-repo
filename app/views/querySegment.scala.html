@@ -1,5 +1,6 @@
 @(queryContent : Map[Airport, Seq[Runaway]], pageNumber : Int, queryText : String, airportPageCount : Int)
 
+@import shared._
 <!-- Copied from http://jsfiddle.net/whytheday/2Dj7Y/11/ -->
 
 <table class="table table-condensed" style="border-collapse:collapse;">
@@ -71,7 +72,7 @@
 <nav aria-label="Page navigation example">
     <ul class="pagination">
         <li class="page-item @if(pageNumber <= 1) { disabled }">
-            <a class="page-link" href="#" aria-label="Previous">
+            <a class="page-link" href="#" aria-label="Previous" id="previousPage">
                 <span aria-hidden="true">&laquo;</span>
                 <span class="sr-only">Previous</span>
             </a>
@@ -79,8 +80,8 @@
         @for(i <- paginationRange() ){
             <li class="page-item @if(i == pageNumber) { active }"><a class="page-link page-number" href="#">@i</a></li>
         }
-        <li class="page-item @if(queryContent.size < 50){ disabled }">
-            <a class="page-link" href="#" aria-label="Next">
+        <li class="page-item @if(queryContent.size < Shared.paginationLength){ disabled }">
+            <a class="page-link" href="#" aria-label="Next" id="nextPage">
                 <span aria-hidden="true">&raquo;</span>
                 <span class="sr-only">Next</span>
             </a>

@@ -4,10 +4,11 @@ import org.squeryl.PrimitiveTypeMode._
 import org.squeryl.Table
 import org.squeryl.Query
 
-object RunawayDataAccess {
+object RunawayQueries {
   import Database.runawaysTable
   import Database.airportsTable
 
+  
   def runawaysInAirport(airports : List[Airport]) : Query[Runaway] =
     from(runawaysTable) {
       runaway =>
@@ -16,4 +17,5 @@ object RunawayDataAccess {
       )
       select(runaway)
     }
+   
 }

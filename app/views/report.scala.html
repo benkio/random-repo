@@ -1,4 +1,4 @@
-@()(implicit request: play.api.mvc.RequestHeader)
+@(mostCountry : List[(String, Long)], lessCountry: List[(String, Long)])(implicit request: play.api.mvc.RequestHeader)
 
 <!-- template boostrap for tabs and stuff http://bootsnipp.com/snippets/VEomV  -->
 
@@ -20,10 +20,12 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @for((c,v) <- mostCountry) {
                     <tr>
-                        <td></td>
-                        <td></td>
+                        <td>@c</td>
+                        <td>@v</td>
                     </tr>
+                    }
                 </tbody>
             </table>
         </div>
@@ -37,10 +39,12 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @for((c,v) <- lessCountry) {
                     <tr>
-                        <td></td>
-                        <td></td>
+                        <td>@c</td>
+                        <td>@v</td>
                     </tr>
+                    }
                 </tbody>
             </table>
         </div>
