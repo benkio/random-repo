@@ -7,6 +7,10 @@ import scala.util.Try
 import scala.util.Success
 import scala.util.Failure
 
+import org.squeryl.dsl._
+import org.squeryl.dsl.ast._
+
+
 case class Country(id             : Int,
                    code           : String,
                    name           : String,
@@ -73,6 +77,10 @@ object Database extends Schema {
     c.code is(unique)
   }}
 
+  def countOrdering(isDesc : Boolean) = {
+    if (isDesc) count() desc else count() asc
+  }
+
   def airportRunawayQuery(countryNameOrCode : String, offset: Int, pageLength: Int) : Try[(List[Airport], List[Runaway], Long)] = Try(inTransaction {
       val countryCode = CountryQueries.countryByCodeOrName(countryNameOrCode).single
       val airports = AirportQueries.airportsByCountryCode(countryCode, offset, pageLength).toList
@@ -85,6 +93,6 @@ object Database extends Schema {
 
   def getAllCountryCodeAndNames: Try[List[(String,String)]] = Try(inTransaction { CountryQueries.countryAllCodeAndNames.toList})
 
-  def getAirportDenseCountries(numberOfResult : Int, isDesc : Boolean) : Try[List[(String, Long)]] = Try(inTransaction { AirportQueries.getAirportDenseCountries(numberOfResult, isDesc).toList map {t => (t.key, t.measures)} })
-
+  def getAirportDenseCountries(numberOfResult : Int, isDesc : Boolean) : Try[List[(String, Long)]] = Try(inTransaction { AirportQueries.getAirportDenseCountries(numberOfResult, isDesc).toList map {t => (t.key, t.measures)}
+  })
 }

@@ -9,10 +9,7 @@ import org.squeryl.dsl.ast._
 
 object AirportQueries {
   import Database.airportsTable
-
-  def countOrdering(isDesc : Boolean) : ExpressionNode = {
-    if (isDesc) count() desc else count() asc
-  }
+  import Database.countryTable
 
   def airportsByCountryCode(countryCode : String, offset : Int, pageLength: Int ) : Query[Airport] = from(airportsTable) {
     airport => where(airport.iso_country === countryCode) select (airport)
@@ -22,7 +19,7 @@ object AirportQueries {
     airport => where(airport.iso_country === countryCode) compute(count)
   }
 
-  def getAirportDenseCountries(numberOfResult : Int, isDesc : Boolean) : Query[GroupWithMeasures[String,Long]] = from(airportsTable) {
-    airport => groupBy(airport.iso_country) compute(count()) orderBy(countOrdering(isDesc))
+  def getAirportDenseCountries(numberOfResult : Int, isDesc : Boolean) = join(countryTable, airportsTable.leftOuter) {
+    (country, airport) => groupBy(country.name) compute(count()) orderBy(Database.countOrdering(isDesc)) on(Some(country.code) === airport.map(_.iso_country))
   }.page(0, numberOfResult)
 }

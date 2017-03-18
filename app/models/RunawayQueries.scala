@@ -8,7 +8,7 @@ object RunawayQueries {
   import Database.runawaysTable
   import Database.airportsTable
 
-  
+
   def runawaysInAirport(airports : List[Airport]) : Query[Runaway] =
     from(runawaysTable) {
       runaway =>
@@ -17,5 +17,5 @@ object RunawayQueries {
       )
       select(runaway)
     }
-   
+
 }
