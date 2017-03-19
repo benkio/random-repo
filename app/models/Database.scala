@@ -77,10 +77,12 @@ object Database extends Schema {
     c.code is(unique)
   }}
 
+  // Based on the boolean return the orderby count arg with ascending or descending
   def countOrdering(isDesc : Boolean) = {
     if (isDesc) count() desc else count() asc
   }
 
+  // Perform a transaction with different queries to get the search result
   def airportRunawayQuery(countryNameOrCode : String, offset: Int, pageLength: Int) : Try[(List[Airport], List[Runaway], Long)] = Try(inTransaction {
       val countryCode = CountryQueries.countryByCodeOrName(countryNameOrCode).single
       val airports = AirportQueries.airportsByCountryCode(countryCode, offset, pageLength).toList
@@ -91,8 +93,12 @@ object Database extends Schema {
       (airports, runaways, airportsCount)
    })
 
+  // Return a list of countryes code and names
   def getAllCountryCodeAndNames: Try[List[(String,String)]] = Try(inTransaction { CountryQueries.countryAllCodeAndNames.toList})
 
+  // Return the number of airports by country with the specified order and number of results
   def getAirportDenseCountries(numberOfResult : Int, isDesc : Boolean) : Try[List[(String, Long)]] = Try(inTransaction { AirportQueries.getAirportDenseCountries(numberOfResult, isDesc).toList map {t => (t.key, t.measures)}
-  })
+                                                                                                         })
+
+
 }
