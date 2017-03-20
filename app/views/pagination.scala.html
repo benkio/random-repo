@@ -1,0 +1,41 @@
+@(pageNumber : Int, totalPages : Int, contentSize: Int)
+
+@import controllers.utils.PaginationLogic
+
+@paginationRange() = @{
+    val max = if (pageNumber + 3 >= totalPages) totalPages else (pageNumber + 3)
+    val min = if (pageNumber - 3 <= 1 ) 1 else (pageNumber - 3)
+    min to max
+}
+
+
+<nav aria-label="Page navigation example">
+    <ul class="pagination">
+        <li class="page-item @if(pageNumber <= 1) { disabled }">
+            <a class="page-link" href="#" aria-label="Previous" id="previousPage">
+                <span aria-hidden="true">&laquo;</span>
+                <span class="sr-only">Previous</span>
+            </a>
+        </li>
+        @for(i <- paginationRange() ){
+            <li class="page-item @if(i == pageNumber) { active }"><a class="page-link page-number" href="#">@i</a></li>
+            }
+            <li class="page-item @if(contentSize < PaginationLogic.paginationLength){ disabled }">
+                <a class="page-link" href="#" aria-label="Next" id="nextPage">
+                    <span aria-hidden="true">&raquo;</span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </li>
+    </ul>
+</nav>
+
+<script>
+ $('#previousPage').click(function () { changePage(@pageNumber - 1); });
+ $('#nextPage').click(function () { changePage(@pageNumber + 1); });
+ $('.page-link.page-number').on('click',function(e){
+     e.preventDefault();
+     var number = parseInt($(this).text());
+     console.log(number);
+     changePage(number);
+ });
+</script>

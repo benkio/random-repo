@@ -5,8 +5,8 @@
 
 # An example controller showing a sample home page
 GET     /                           controllers.HomeController.index
-GET     /report                     controllers.HomeController.report
-GET     /query                      controllers.HomeController.query(countryNameOrCode : String, pageNumber : Int)
+GET     /report                     controllers.HomeController.report(pageNumber: Int ?= 1)
+GET     /query                      controllers.HomeController.query(countryNameOrCode : String, pageNumber : Int ?= 1)
 GET     /error                      controllers.HomeController.error(message : String)
 
 # Map static resources from the /public folder to the /assets URL path

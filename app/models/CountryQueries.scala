@@ -12,7 +12,10 @@ object CountryQueries {
     country => where (country.code === codeOrName or country.name === codeOrName) select(country.code)
   }
 
-  def countryAllCodeAndNames() : Query[(String,String)] = from(countryTable) {
-    country => select (country.code, country.name)
+  def countries : Query[Country] = from(countryTable) {
+    country => select (country)
   }
+
+  def countries(pageLength : Int, offset : Int) : Query[Country] = countries.page(offset, pageLength)
+
 }

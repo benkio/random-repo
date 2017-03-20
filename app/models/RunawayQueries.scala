@@ -4,6 +4,11 @@ import org.squeryl.PrimitiveTypeMode._
 import org.squeryl.Table
 import org.squeryl.Query
 
+import org.squeryl.dsl._
+import org.squeryl.dsl.ast._
+import org.squeryl.dsl.fsm._
+
+
 object RunawayQueries {
   import Database.runawaysTable
   import Database.airportsTable
@@ -18,4 +23,7 @@ object RunawayQueries {
       select(runaway)
     }
 
+  def runawaySurfaceAndAirportRef  = from (runawaysTable) {
+    runaway => where (runaway.surface isNotNull) groupBy (runaway.surface, runaway.airport_ref)
+  }
 }

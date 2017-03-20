@@ -94,11 +94,18 @@ object Database extends Schema {
    })
 
   // Return a list of countryes code and names
-  def getAllCountryCodeAndNames: Try[List[(String,String)]] = Try(inTransaction { CountryQueries.countryAllCodeAndNames.toList})
+  def countries: Try[List[Country]] = Try(inTransaction { CountryQueries.countries.toList})
+  def countries(pageLength : Int, offset : Int): Try[List[Country]] = Try(inTransaction { CountryQueries.countries(pageLength, offset).toList})
 
   // Return the number of airports by country with the specified order and number of results
   def getAirportDenseCountries(numberOfResult : Int, isDesc : Boolean) : Try[List[(String, Long)]] = Try(inTransaction { AirportQueries.getAirportDenseCountries(numberOfResult, isDesc).toList map {t => (t.key, t.measures)}
                                                                                                          })
 
+  def runawaySurfaceAndAirportRef = Try(inTransaction {
+                                      RunawayQueries.runawaySurfaceAndAirportRef.toList
+                                        })
 
+  def airportByCountry(limitContries: Int, offsetCountries: Int) = Try(inTransaction {
+                                                                         AirportQueries.airportByCountry(CountryQueries.countries(limitContries, offsetCountries)).toList
+                                                                       })
 }

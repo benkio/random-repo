@@ -10,28 +10,20 @@ import scala.concurrent.duration._
 import scala.concurrent._
 import scala.util._
 import ExecutionContext.Implicits.global
+import scala.collection.parallel.immutable._
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
  * application's home page.
  */
 
-/*
- NEED TO RUN ASYNCHRONOUSLY FOR FIRST 10 MOST POPULATED COUNTRIES
- USE PAGINATION AND PUT THEM LAST
-
- SELECT DISTINCT C.ISO_COUNTRY, B.SURFACE
- FROM (SELECT SURFACE, AIRPORT_REF, AIRPORT_IDENT FROM RUNAWAYS WHERE SURFACE IS NOT NULL) AS B
- JOIN AIRPORTS C
- ON B.AIRPORT_REF = C.ID AND B.AIRPORT_IDENT = C.IDENT
- WHERE C.ISO_COUNTRY IN ('AE', 'AF', 'AO', 'AM', 'AL' )
- */
-
 @Singleton
 class HomeController @Inject() extends Controller {
 
-  val allCountriesCodeAndNames : Future[Try[List[(String,String)]]] = Future {
-    Database.getAllCountryCodeAndNames
+  val timeout = Duration.Inf
+
+  val countries : Future[Try[List[Country]]] = Future {
+    Database.countries
   }
 
   val reportMostAirportDensity : Future[Try[List[(String, Long)]]] = Future {
@@ -40,29 +32,44 @@ class HomeController @Inject() extends Controller {
   val reportLessAirportDensity : Future[Try[List[(String, Long)]]] = Future {
     Database.getAirportDenseCountries(Shared.reportNumberCountryInDensity, false)
   }
-  val reportSurfaceTypeRunawayPerCountriesChunk1 : Future[Try[List[(String, List[String])]]] = Future {
-    val countriesWithMostAirports = Await.result(reportMostAirportDensity, 10 seconds)
-    val countriesCodeAndNames = Await.result(allCountriesCodeAndNames, 10 seconds)
-    countriesWithMostAirports map { l => {
-                                     val countriesCodes = countriesCodeAndNames.filter(t => l.map(_._1).contains(t.map(_._2))).map(x => x.map(_._1))
-                                     ???
-                                   }
-    }
-  }
 
+  /*
+  val reportRunawaySurfacePerCountry : List[Future[Try[ParMap[String, List[String]]]]] = {
+    val cs = Await.result(countries, timeout)
+    val totalPages : Try[Int] = cs.map( l => { PaginationLogic.getTotalPages(l.length.toLong) })
+    totalPages map { tp =>
+      (1 to tp).map(i => reportRunawaySurfacePerCountry(PaginationLogic.paginationLength, PaginationLogic.getOffset(i))).toList
+    } getOrElse (List())
+  }
+   */
+  def reportRunawaySurfacePerCountry(pageLength: Int, offset: Int) : Future[Try[Map[String, List[String]]]] = Future {
+    /*for {
+      x <- Database.airportByCountry(pageLength, offset)
+      y <- Database.runawaySurfaceAndAirportRef
+
+      } yeld
+     */
+    ???
+  }
+   
   // Fetch from database the list of countries and pass them in the index page
   def index = Action { implicit request =>
-    val countrySuggestions = Await.result(allCountriesCodeAndNames, 10 seconds) map(_.map(_._2))
+    val countrySuggestions = Await.result(countries, 10 seconds) map(_.map(_.name))
     ErrorHandler.checkForErrors(countrySuggestions, (l : List[String]) => Ok(views.html.index(l)))
   }
 
   // Fetch from database the list of most and less countries by airports density and pass them to the
   // Report page
-  def report = Action { implicit request =>
-    val result = List(Await.result(reportMostAirportDensity, 10 seconds),
-                      Await.result(reportLessAirportDensity, 10 seconds))
-    ErrorHandler.checkForErrors(result, (l : List[List[(String, Long)]]) => Ok(views.html.report(l(0), l(1))))
+  def report(pageNumber : Int) = Action { implicit request =>
+    val result1 = List(Await.result(reportMostAirportDensity, timeout),
+                       Await.result(reportLessAirportDensity, timeout))
+    ErrorHandler.checkForErrors(result1,
+                                (l : List[List[(String, Long)]]) => {
+                                  val data = Await.result(reportRunawaySurfacePerCountry(PaginationLogic.paginationLength, PaginationLogic.getOffset(pageNumber)), timeout)
+                                  ErrorHandler.checkForErrors(data, (r : Map[String, List[String]]) => Ok(views.html.report(l(0), l(1), r, pageNumber, PaginationLogic.getTotalPages(r.size))))
+                                })
   }
+
 
   // Perfom the search with the input, regroup the data properly and pass it to the query page
   def query(countryNameOrCode : String, pageNumber : Int) = Action { implicit request =>
