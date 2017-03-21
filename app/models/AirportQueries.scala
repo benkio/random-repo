@@ -28,7 +28,7 @@ object AirportQueries {
     a => where (a.id in (from(runawaysTable){ r => select(r.airport_ref)} )) select (a)
   }
 
-  def airportByCountry(countries : Query[Country]) = from(airportInRunaways, countries) {
-    (a, c) => where (a.iso_country === c.code) select(c.name, a.id)
+  def airportByCountry(countriesCode : List[String]) : Query[(String, Int)] = from(airportInRunaways, countryTable) {
+    (a, c) => where (a.iso_country === c.code and (c.code in (countriesCode))) select(c.name, a.id)
   }
 }

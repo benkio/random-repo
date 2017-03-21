@@ -106,6 +106,7 @@ object Database extends Schema {
                                         })
 
   def airportByCountry(limitContries: Int, offsetCountries: Int) = Try(inTransaction {
-                                                                         AirportQueries.airportByCountry(CountryQueries.countries(limitContries, offsetCountries)).toList
+                                                                         val filteredCountryCodes = CountryQueries.countries(limitContries, offsetCountries).toList.map(_.code)
+                                                                         AirportQueries.airportByCountry(filteredCountryCodes).toList
                                                                        })
 }

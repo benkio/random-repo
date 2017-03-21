@@ -1,7 +1,8 @@
 package controllers.utils
 
-trait PaginationLogic {
-  val paginationLength = 50
+trait IPaginationLogic {
+
+  def paginationLength : Int
 
   def getOffset(pageNumber : Int) : Int
 
@@ -9,7 +10,9 @@ trait PaginationLogic {
 }
 
 // Object with logic for the pagination, used in both controllers and views
-object PaginationLogic extends PaginationLogic {
+class PaginationLogic(pageLength : Int) extends IPaginationLogic {
+
+  def paginationLength = pageLength
 
   def getOffset(pageNumber : Int) : Int = {
     (pageNumber - 1) * paginationLength

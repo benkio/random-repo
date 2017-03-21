@@ -10,7 +10,9 @@ import scala.concurrent.duration._
 import scala.concurrent._
 import scala.util._
 import ExecutionContext.Implicits.global
-import scala.collection.parallel.immutable._
+import org.squeryl.dsl._
+import org.squeryl.dsl.ast._
+
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -21,6 +23,9 @@ import scala.collection.parallel.immutable._
 class HomeController @Inject() extends Controller {
 
   val timeout = Duration.Inf
+
+  val paginationLogic1 = new PaginationLogic(50)
+  val paginationLogic2 = new PaginationLogic(10)
 
   val countries : Future[Try[List[Country]]] = Future {
     Database.countries
@@ -33,23 +38,20 @@ class HomeController @Inject() extends Controller {
     Database.getAirportDenseCountries(Shared.reportNumberCountryInDensity, false)
   }
 
-  /*
-  val reportRunawaySurfacePerCountry : List[Future[Try[ParMap[String, List[String]]]]] = {
-    val cs = Await.result(countries, timeout)
-    val totalPages : Try[Int] = cs.map( l => { PaginationLogic.getTotalPages(l.length.toLong) })
-    totalPages map { tp =>
-      (1 to tp).map(i => reportRunawaySurfacePerCountry(PaginationLogic.paginationLength, PaginationLogic.getOffset(i))).toList
-    } getOrElse (List())
-  }
-   */
   def reportRunawaySurfacePerCountry(pageLength: Int, offset: Int) : Future[Try[Map[String, List[String]]]] = Future {
-    /*for {
-      x <- Database.airportByCountry(pageLength, offset)
-      y <- Database.runawaySurfaceAndAirportRef
-
-      } yeld
-     */
-    ???
+    Database.airportByCountry(pageLength, offset).flatMap(x =>
+      Database.runawaySurfaceAndAirportRef.map(y =>
+        x.flatMap{ case (c, aid) => y.map(_.key) filter{
+                    case (s, aid2) => aid == aid2 } map {
+                    case (s, aid2) => (c,s)
+                  }
+        }.distinct
+      ).map(xs =>
+        xs.groupBy(_._1) map {
+          case (c, l) => c -> l.filterNot(t => t._2.isEmpty).map(_._2.get)
+        } toMap
+      )
+    )
   }
    
   // Fetch from database the list of countries and pass them in the index page
@@ -65,8 +67,8 @@ class HomeController @Inject() extends Controller {
                        Await.result(reportLessAirportDensity, timeout))
     ErrorHandler.checkForErrors(result1,
                                 (l : List[List[(String, Long)]]) => {
-                                  val data = Await.result(reportRunawaySurfacePerCountry(PaginationLogic.paginationLength, PaginationLogic.getOffset(pageNumber)), timeout)
-                                  ErrorHandler.checkForErrors(data, (r : Map[String, List[String]]) => Ok(views.html.report(l(0), l(1), r, pageNumber, PaginationLogic.getTotalPages(r.size))))
+                                  val data = Await.result(reportRunawaySurfacePerCountry(paginationLogic2.paginationLength, paginationLogic2.getOffset(pageNumber)), timeout)
+                                  ErrorHandler.checkForErrors(data, (r : Map[String, List[String]]) => Ok(views.html.report(l(0), l(1), r, pageNumber)))
                                 })
   }
 
@@ -74,8 +76,8 @@ class HomeController @Inject() extends Controller {
   // Perfom the search with the input, regroup the data properly and pass it to the query page
   def query(countryNameOrCode : String, pageNumber : Int) = Action { implicit request =>
     val result /*(airports : List[Airport], runaways : List[Runaway], airportsCount : Long)*/ = Database.airportRunawayQuery(countryNameOrCode,
-                                                                                                                  PaginationLogic.getOffset(pageNumber),
-                                                                                                                  PaginationLogic.paginationLength)
+                                                                                                                  paginationLogic1.getOffset(pageNumber),
+                                                                                                                  paginationLogic1.paginationLength)
 
     ErrorHandler.checkForErrors(result, (t : (List[Airport], List[Runaway], Long)) => {
 
@@ -84,7 +86,7 @@ class HomeController @Inject() extends Controller {
         Ok(views.html.querySegment(airportsAndRunawaysGrouped,
                                    pageNumber,
                                    countryNameOrCode,
-                                   PaginationLogic.getTotalPages(t._3)))
+                                   paginationLogic1.getTotalPages(t._3)))
     })
   }
 

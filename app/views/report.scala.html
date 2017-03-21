@@ -1,9 +1,12 @@
 @(mostCountry : List[(String, Long)],
   lessCountry: List[(String, Long)],
   runawaySurfacePerCountry : Map[String, List[String]],
-  pageNumber : Int,
-  totalPages : Int
+  pageNumber : Int
 )(implicit request: play.api.mvc.RequestHeader)
+
+@import controllers.utils._
+@import shared._
+
 
 <!-- template boostrap for tabs and stuff http://bootsnipp.com/snippets/VEomV  -->
 
@@ -98,6 +101,6 @@
 
         </script>
 
-        @pagination(pageNumber, totalPages, runawaySurfacePerCountry.size)
+        @pagination(pageNumber, new PaginationLogic(Shared.shortPagination), runawaySurfacePerCountry.size)
     </div>
 }

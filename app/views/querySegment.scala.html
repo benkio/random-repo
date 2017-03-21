@@ -1,4 +1,9 @@
-@(queryContent : Map[Airport, Seq[Runaway]], pageNumber : Int, queryText : String, airportPageCount : Int)
+@(queryContent : Map[Airport, Seq[Runaway]],
+  pageNumber : Int,
+  queryText : String,
+  airportPageCount : Int)
+@import controllers.utils._
+@import shared._
 
 <!-- Copied from http://jsfiddle.net/whytheday/2Dj7Y/11/ -->
 
@@ -66,4 +71,4 @@
  function changePage(pageNumber) { queryPage('@queryText', pageNumber) }
 </script>
 
-@pagination(pageNumber, airportPageCount, queryContent.size)
+@pagination(pageNumber, new PaginationLogic(Shared.defaultPagination), queryContent.size)

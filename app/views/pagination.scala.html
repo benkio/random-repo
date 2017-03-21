@@ -1,8 +1,10 @@
-@(pageNumber : Int, totalPages : Int, contentSize: Int)
+@import controllers.utils._
+@(pageNumber : Int, paginationLogic : IPaginationLogic, contentSize: Int)
 
-@import controllers.utils.PaginationLogic
+
 
 @paginationRange() = @{
+    val totalPages = paginationLogic.getTotalPages(contentSize)
     val max = if (pageNumber + 3 >= totalPages) totalPages else (pageNumber + 3)
     val min = if (pageNumber - 3 <= 1 ) 1 else (pageNumber - 3)
     min to max
@@ -20,7 +22,7 @@
         @for(i <- paginationRange() ){
             <li class="page-item @if(i == pageNumber) { active }"><a class="page-link page-number" href="#">@i</a></li>
             }
-            <li class="page-item @if(contentSize < PaginationLogic.paginationLength){ disabled }">
+            <li class="page-item @if(contentSize < paginationLogic.paginationLength){ disabled }">
                 <a class="page-link" href="#" aria-label="Next" id="nextPage">
                     <span aria-hidden="true">&raquo;</span>
                     <span class="sr-only">Next</span>
