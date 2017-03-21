@@ -10,8 +10,8 @@ import org.squeryl.dsl.fsm._
 
 
 object RunawayQueries {
-  import Database.runawaysTable
-  import Database.airportsTable
+  import DatabaseSchema.runawaysTable
+  import DatabaseSchema.airportsTable
 
 
   def runawaysInAirport(airports : List[Airport]) : Query[Runaway] =

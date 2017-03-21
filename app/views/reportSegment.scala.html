@@ -1,0 +1,36 @@
+@(runawaySurfacePerCountry : Map[String, List[String]],
+  pageNumber : Int,
+  paginationLength : Int,
+  totalPages : Int
+)(implicit request: play.api.mvc.RequestHeader)
+
+
+<div class="row">
+    <div class="page-header">
+        <h3>Surface Type Per Country</h2>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <td>Country Name</td>
+                <td>List of Surfaces Type</td>
+            </tr>
+        </thead>
+        <tbody>
+            @for((c,stl) <- runawaySurfacePerCountry) {
+                <tr>
+                    <td>@c</td>
+                    <td>
+                        <ul id="menu" class="list-inline">
+                            @for(st <- stl) { 
+                                <li>@st</li>
+                                }
+                        </ul>
+                    </td>
+                </tr>
+                }
+        </tbody>
+    </table>
+
+    @pagination(pageNumber, paginationLength, totalPages)
+</div>

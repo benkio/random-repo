@@ -1,7 +1,9 @@
 @(mostCountry : List[(String, Long)],
   lessCountry: List[(String, Long)],
   runawaySurfacePerCountry : Map[String, List[String]],
-  pageNumber : Int
+  pageNumber : Int,
+  paginationLength : Int,
+  totalPages : Int
 )(implicit request: play.api.mvc.RequestHeader)
 
 @import controllers.utils._
@@ -12,9 +14,19 @@
 
 @main("Air Tracker") {
     @helper.javascriptRouter("jsRoutes")(
-        routes.javascript.HomeController.report
+        routes.javascript.HomeController.reportPage
     )
 
+    <script>
+
+     function changePage(pageNumber){
+         $.ajax(jsRoutes.controllers.HomeController.reportPage(pageNumber))
+          .done( function(data) {
+              $('#reportSegment').html(data)
+          });
+     };
+
+    </script>
 
 
     <div class="row">
@@ -62,45 +74,10 @@
             </table>
         </div>
     </div>
-    <div class="row">
-        <div class="page-header">
-            <h3>Surface Type Per Country</h2>
-        </div>
-        <div id="reportSurfaceByCountry">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <td>Country Name</td>
-                        <td>List of Surfaces Type</td>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for((c,stl) <- runawaySurfacePerCountry) {
-                        <tr>
-                            <td>@c</td>
-                            <td>
-                                <ul id="menu" class="list-inline">
-                                    @for(st <- stl) { 
-                                        <li>@st</li>
-                                    }
-                                </ul>
-                            </td>
-                        </tr>
-                        }
-                </tbody>
-            </table>
-        </div>
-        <script>
-
-         function changePage(pageNumber){
-             $.ajax(jsRoutes.controllers.HomeController.report(pageNumber))
-              .done( function(data) {
-                  $("#reportSurfaceByCountry").html(data);
-              });
-         };
-
-        </script>
-
-        @pagination(pageNumber, new PaginationLogic(Shared.shortPagination), runawaySurfacePerCountry.size)
+    <div id="reportSegment">
+        @reportSegment(runawaySurfacePerCountry,
+                       pageNumber,
+                       paginationLength,
+                       totalPages)
     </div>
 }

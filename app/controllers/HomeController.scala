@@ -14,70 +14,88 @@ import org.squeryl.dsl._
 import org.squeryl.dsl.ast._
 
 
+import play.api.cache._
+import play.api.mvc._
+import javax.inject.Inject
+
 /**
  * This controller creates an `Action` to handle HTTP requests to the
  * application's home page.
  */
 
 @Singleton
-class HomeController @Inject() extends Controller {
+class HomeController @Inject() (cache: CacheApi) extends Controller {
 
-  val timeout = Duration.Inf
+  val database = new Database(cache)
 
   val paginationLogic1 = new PaginationLogic(50)
-  val paginationLogic2 = new PaginationLogic(10)
+  val paginationLogic2 = new PaginationLogic(25)
 
-  val countries : Future[Try[List[Country]]] = Future {
-    Database.countries
-  }
-
-  val reportMostAirportDensity : Future[Try[List[(String, Long)]]] = Future {
-    Database.getAirportDenseCountries(Shared.reportNumberCountryInDensity, true)
-  }
-  val reportLessAirportDensity : Future[Try[List[(String, Long)]]] = Future {
-    Database.getAirportDenseCountries(Shared.reportNumberCountryInDensity, false)
-  }
-
-  def reportRunawaySurfacePerCountry(pageLength: Int, offset: Int) : Future[Try[Map[String, List[String]]]] = Future {
-    Database.airportByCountry(pageLength, offset).flatMap(x =>
-      Database.runawaySurfaceAndAirportRef.map(y =>
-        x.flatMap{ case (c, aid) => y.map(_.key) filter{
-                    case (s, aid2) => aid == aid2 } map {
-                    case (s, aid2) => (c,s)
-                  }
-        }.distinct
-      ).map(xs =>
-        xs.groupBy(_._1) map {
-          case (c, l) => c -> l.filterNot(t => t._2.isEmpty).map(_._2.get)
-        } toMap
+  def reportRunawaySurfacePerCountry(pageLength: Int, offset: Int) : Try[Map[String, List[String]]] =
+    cache.getOrElse[Try[Map[String, List[String]]]]("reportRunawaySurfacePerCountry"+ pageLength + offset){
+      database.airportByCountry(pageLength, offset).flatMap(x =>
+        database.runawaySurfaceAndAirportRef.map(y =>
+          x.flatMap{ case (c, aid) => y.map(_.key) filter{
+                      case (s, aid2) => aid == aid2 } map {
+                      case (s, aid2) => (c,s)
+                    }
+          }.distinct
+        ).map(xs =>
+          xs.groupBy(_._1) map {
+            case (c, l) => c -> l.filterNot(t => t._2.isEmpty).map(_._2.get)
+          } toMap
+        )
       )
-    )
-  }
-   
+    }
   // Fetch from database the list of countries and pass them in the index page
   def index = Action { implicit request =>
-    val countrySuggestions = Await.result(countries, 10 seconds) map(_.map(_.name))
+    val countrySuggestions = database.countries map(_.map(_.name))
     ErrorHandler.checkForErrors(countrySuggestions, (l : List[String]) => Ok(views.html.index(l)))
   }
 
   // Fetch from database the list of most and less countries by airports density and pass them to the
   // Report page
-  def report(pageNumber : Int) = Action { implicit request =>
-    val result1 = List(Await.result(reportMostAirportDensity, timeout),
-                       Await.result(reportLessAirportDensity, timeout))
-    ErrorHandler.checkForErrors(result1,
+  def report() = Action { implicit request =>
+    val reportResult1 = List(database.getAirportDenseCountries(Shared.reportNumberCountryInDensity, true),
+                             database.getAirportDenseCountries(Shared.reportNumberCountryInDensity, false))
+    val reportResult2 = reportRunawaySurfacePerCountry(paginationLogic2.paginationLength, paginationLogic2.getOffset(1))
+    val reportResult3 = database.countries.map(_.length)
+    ErrorHandler.checkForErrors(reportResult1,
                                 (l : List[List[(String, Long)]]) => {
-                                  val data = Await.result(reportRunawaySurfacePerCountry(paginationLogic2.paginationLength, paginationLogic2.getOffset(pageNumber)), timeout)
-                                  ErrorHandler.checkForErrors(data, (r : Map[String, List[String]]) => Ok(views.html.report(l(0), l(1), r, pageNumber)))
+                                  ErrorHandler.checkForErrors(reportResult2,
+                                                              (r : Map[String, List[String]]) =>
+                                    ErrorHandler.checkForErrors(reportResult3,
+                                                                (s : Int) =>
+
+                                      Ok(views.html.report(l(0),
+                                                           l(1),
+                                                           r,
+                                                           1,
+                                                           paginationLogic2.paginationLength,
+                                                           paginationLogic2.getTotalPages(s) ))))
                                 })
+  }
+
+  def reportPage(pageNumber : Int) = Action { implicit request =>
+    val reportResult = reportRunawaySurfacePerCountry(paginationLogic2.paginationLength, paginationLogic2.getOffset(pageNumber))
+    val reportResult3 = database.countries.map(_.length)
+    ErrorHandler.checkForErrors(reportResult,
+                                (r : Map[String, List[String]]) =>
+      ErrorHandler.checkForErrors(reportResult3,
+                                  (s : Int) =>
+        Ok(views.html.reportSegment(r,
+                             pageNumber,
+                             paginationLogic2.paginationLength,
+                             paginationLogic2.getTotalPages(s)))))
   }
 
 
   // Perfom the search with the input, regroup the data properly and pass it to the query page
   def query(countryNameOrCode : String, pageNumber : Int) = Action { implicit request =>
-    val result /*(airports : List[Airport], runaways : List[Runaway], airportsCount : Long)*/ = Database.airportRunawayQuery(countryNameOrCode,
-                                                                                                                  paginationLogic1.getOffset(pageNumber),
-                                                                                                                  paginationLogic1.paginationLength)
+    /*(airports : List[Airport], runaways : List[Runaway], airportsCount : Long)*/
+    val result = database.airportRunawayQuery(countryNameOrCode,
+                                              paginationLogic1.getOffset(pageNumber),
+                                              paginationLogic1.paginationLength)
 
     ErrorHandler.checkForErrors(result, (t : (List[Airport], List[Runaway], Long)) => {
 
@@ -86,7 +104,8 @@ class HomeController @Inject() extends Controller {
         Ok(views.html.querySegment(airportsAndRunawaysGrouped,
                                    pageNumber,
                                    countryNameOrCode,
-                                   paginationLogic1.getTotalPages(t._3)))
+                                   paginationLogic1.getTotalPages(t._3),
+                                   paginationLogic1.paginationLength))
     })
   }
 

@@ -19,6 +19,6 @@ class PaginationLogic(pageLength : Int) extends IPaginationLogic {
   }
 
   def getTotalPages(totalRecord : Long) : Int = {
-    (totalRecord.toInt/paginationLength) + 1
+    (totalRecord.toInt/paginationLength)
   }
 }

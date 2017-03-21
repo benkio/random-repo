@@ -6,7 +6,7 @@ import org.squeryl.Query
 import collection.Iterable
 
 object CountryQueries {
-  import Database.countryTable
+  import DatabaseSchema.countryTable
 
   def countryByCodeOrName(codeOrName : String) : Query[String] = from(countryTable) {
     country => where (country.code === codeOrName or country.name === codeOrName) select(country.code)
