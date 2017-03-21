@@ -11,6 +11,7 @@ libraryDependencies ++= Seq(
   filters,
   cache,
   "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test,
+  "org.mockito" % "mockito-core" % "1.9.5" % "test",
   "com.adrianhurt" %% "play-bootstrap" % "1.1-P25-B3",
   jdbc,
   evolutions,
