@@ -31,21 +31,33 @@ class HomeController @Inject() (cache: CacheApi) extends Controller {
   val paginationLogic1 = new PaginationLogic(50)
   val paginationLogic2 = new PaginationLogic(25)
 
+  def groupAirportsAndRunaways( airports : List[Airport], runaways : List[Runaway]) : Map[Airport, Seq[Runaway]] = airports zip runaways groupBy {_._1} map {
+    case (a,l) => { a -> l.map {
+                     case (a,r) => r
+                   }
+    } } map {
+    case (a,r) => a -> r.toSeq
+  }
+
+  def groupCountryCodeAndSurfaces(countryAndAirportID : Try[List[(String, Int)]], surfaceByAirportID : Try[List[org.squeryl.dsl.Group[Product2[Option[String],Int]]]]) : Try[Map[String, List[String]]] = {
+    countryAndAirportID.flatMap(x =>
+      surfaceByAirportID.map(y =>
+        x.flatMap{ case (c, aid) => y.map(_.key) filter{
+                    case (s, aid2) => aid == aid2 } map {
+                    case (s, aid2) => (c,s)
+                  }
+        }.distinct
+      ).map(xs =>
+        xs.groupBy(_._1) map {
+          case (c, l) => c -> l.filterNot(t => t._2.isEmpty).map(_._2.get)
+        } toMap
+      )
+    )
+  }
+
   def reportRunawaySurfacePerCountry(pageLength: Int, offset: Int) : Try[Map[String, List[String]]] =
     cache.getOrElse[Try[Map[String, List[String]]]]("reportRunawaySurfacePerCountry"+ pageLength + offset){
-      database.airportByCountry(pageLength, offset).flatMap(x =>
-        database.runawaySurfaceAndAirportRef.map(y =>
-          x.flatMap{ case (c, aid) => y.map(_.key) filter{
-                      case (s, aid2) => aid == aid2 } map {
-                      case (s, aid2) => (c,s)
-                    }
-          }.distinct
-        ).map(xs =>
-          xs.groupBy(_._1) map {
-            case (c, l) => c -> l.filterNot(t => t._2.isEmpty).map(_._2.get)
-          } toMap
-        )
-      )
+      groupCountryCodeAndSurfaces(database.airportByCountry(pageLength, offset), database.runawaySurfaceAndAirportRef)
     }
   // Fetch from database the list of countries and pass them in the index page
   def index = Action { implicit request =>
@@ -99,14 +111,14 @@ class HomeController @Inject() (cache: CacheApi) extends Controller {
 
     ErrorHandler.checkForErrors(result, (t : (List[Airport], List[Runaway], Long)) => {
 
-        val airportsAndRunawaysGrouped = t._1 zip t._2 groupBy {_._1} map { case (a,l) => { a -> l.map { case (a,r) => r } } } map { case (a,r) => a -> r.toSeq }
+                                  val airportsAndRunawaysGrouped = groupAirportsAndRunaways(t._1, t._2)
 
-        Ok(views.html.querySegment(airportsAndRunawaysGrouped,
-                                   pageNumber,
-                                   countryNameOrCode,
-                                   paginationLogic1.getTotalPages(t._3),
-                                   paginationLogic1.paginationLength))
-    })
+                                  Ok(views.html.querySegment(airportsAndRunawaysGrouped,
+                                                             pageNumber,
+                                                             countryNameOrCode,
+                                                             paginationLogic1.getTotalPages(t._3),
+                                                             paginationLogic1.paginationLength))
+                                })
   }
 
   def error(message : String) = Action {
