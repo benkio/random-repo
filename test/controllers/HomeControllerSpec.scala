@@ -4,10 +4,13 @@ import org.scalatestplus.play._
 import play.api.test._
 import play.api.test.Helpers._
 import org.scalatest.Inspectors.{forAll}
+import org.squeryl.dsl._
+import scala.util._
 
 import play.api.cache._
 import play.api.mvc._
 import scala.concurrent._
+import models._
 
 import test.mock._
 
@@ -156,6 +159,60 @@ class HomeControllerSpec extends PlaySpec with OneAppPerTest {
 
         checkRoute(allKeywords, homes, true)
       }
+    }
+  }
+
+  "Grouper" should {
+    "groupCountryCodeAndSurfaces must group correctly the provided inputs" in {
+      val countryAndAirportID = Try(
+        List(("Italy", 1), ("Italy", 2), ("Italy", 3), ("Brazil", 4), ("Brazil", 5), ("Brazil", 6)
+        )
+      )
+
+      val surfaceByAirportID : Try[List[org.squeryl.dsl.Group[Product2[Option[String],Int]]]] = Try(
+        List(new Group(new Tuple2(None, 1)),
+             new Group(new Tuple2(Some("testSurfaceIta1"), 1)),
+             new Group(new Tuple2(Some("testSurfaceIta2"), 1)),
+             new Group(new Tuple2(Some("testSurfaceIta3"), 1)),
+             new Group(new Tuple2(Some("testSurfaceIta4"), 2)),
+             new Group(new Tuple2(Some("testSurfaceIta5"), 2)),
+             new Group(new Tuple2(Some("testSurfaceIta6"), 3)),
+             new Group(new Tuple2(None, 3)),
+             new Group(new Tuple2(Some("testSurfaceBrazil1"), 4)),
+             new Group(new Tuple2(Some("testSurfaceBrazil2"), 4)),
+             new Group(new Tuple2(Some("testSurfaceBrazil3"), 4)),
+             new Group(new Tuple2(Some("testSurfaceBrazil4"), 5)),
+             new Group(new Tuple2(Some("testSurfaceBrazil5"), 5)),
+             new Group(new Tuple2(Some("testSurfaceBrazil6"), 6)),
+             new Group(new Tuple2(None, 6))
+        ))
+
+      val expected = Try(
+        Map( "Italy" -> List("testSurfaceIta1", "testSurfaceIta2", "testSurfaceIta3", "testSurfaceIta4", "testSurfaceIta5", "testSurfaceIta6"), "Brazil" -> List("testSurfaceBrazil1", "testSurfaceBrazil2", "testSurfaceBrazil3", "testSurfaceBrazil4", "testSurfaceBrazil5", "testSurfaceBrazil6")
+        )
+      )
+      val result = Grouper.groupCountryCodeAndSurfaces(countryAndAirportID, surfaceByAirportID)
+      result mustBe expected
+    }
+
+    "groupAirportsAndRunaways must group correctly the provided input" in {
+      val airports = List(Airport(46181,"IT-0001","small_airport","PRATI NUOVI",45.268665f,7.947943f,Some(768),"IT"),
+                          Airport(46546,"IT-0002","small_airport","Senigalia Airstrip",43.738266f,13.1832075f,None,"IT"),
+                          Airport(46547,"IT-0003","small_airport","Field Sansepolcro",43.558502f,12.155771f,None,"IT"),
+                          Airport(298337,"IT-0004","small_airport","Aviosuperficie Eremo della Giubiliana",36.861286f,14.627008f,Some(1401),"IT"))
+      val runaways = List(Runaway(269408,6523,"00A",Some(80),Some(80),Some("ASPH-G"),true,false),
+                         Runaway(255155,6524,"00AK",Some(2500),Some(70),Some("GRVL"),false,false),
+                         Runaway(254165,6525,"00AL",Some(2300),Some(200),Some("TURF"),false,false),
+                         Runaway(270932,6526,"00AR",Some(40),Some(40),Some("GRASS"),false,false)
+                         )
+      val expected = Map(Airport(46181,"IT-0001","small_airport","PRATI NUOVI",45.268665f,7.947943f,Some(768),"IT") -> List(Runaway(269408,6523,"00A",Some(80),Some(80),Some("ASPH-G"),true,false)),
+                                 Airport(46546,"IT-0002","small_airport","Senigalia Airstrip",43.738266f,13.1832075f,None,"IT") -> List(Runaway(255155,6524,"00AK",Some(2500),Some(70),Some("GRVL"),false,false)),
+                                 Airport(46547,"IT-0003","small_airport","Field Sansepolcro",43.558502f,12.155771f,None,"IT") -> List(Runaway(254165,6525,"00AL",Some(2300),Some(200),Some("TURF"),false,false)),
+                                 Airport(298337,"IT-0004","small_airport","Aviosuperficie Eremo della Giubiliana",36.861286f,14.627008f,Some(1401),"IT") -> List(Runaway(270932,6526,"00AR",Some(40),Some(40),Some("GRASS"),false,false)))
+
+      val result = Grouper.groupAirportsAndRunaways(airports, runaways)
+
+      result mustBe expected
     }
   }
 }
