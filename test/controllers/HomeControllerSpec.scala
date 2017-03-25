@@ -200,15 +200,15 @@ class HomeControllerSpec extends PlaySpec with OneAppPerTest {
                           Airport(46546,"IT-0002","small_airport","Senigalia Airstrip",43.738266f,13.1832075f,None,"IT"),
                           Airport(46547,"IT-0003","small_airport","Field Sansepolcro",43.558502f,12.155771f,None,"IT"),
                           Airport(298337,"IT-0004","small_airport","Aviosuperficie Eremo della Giubiliana",36.861286f,14.627008f,Some(1401),"IT"))
-      val runaways = List(Runaway(269408,6523,"00A",Some(80),Some(80),Some("ASPH-G"),true,false),
-                         Runaway(255155,6524,"00AK",Some(2500),Some(70),Some("GRVL"),false,false),
-                         Runaway(254165,6525,"00AL",Some(2300),Some(200),Some("TURF"),false,false),
-                         Runaway(270932,6526,"00AR",Some(40),Some(40),Some("GRASS"),false,false)
+      val runaways = List(Runaway(269408,46181,"IT-0001" ,Some(80),Some(80),Some("ASPH-G"),true,false),
+                          Runaway(255155,46546,"IT-0002",Some(2500),Some(70),Some("GRVL"),false,false),
+                          Runaway(254165,46547,"IT-0003",Some(2300),Some(200),Some("TURF"),false,false),
+                          Runaway(270932,46547,"IT-0003",Some(40),Some(40),Some("GRASS"),false,false)
                          )
-      val expected = Map(Airport(46181,"IT-0001","small_airport","PRATI NUOVI",45.268665f,7.947943f,Some(768),"IT") -> List(Runaway(269408,6523,"00A",Some(80),Some(80),Some("ASPH-G"),true,false)),
-                                 Airport(46546,"IT-0002","small_airport","Senigalia Airstrip",43.738266f,13.1832075f,None,"IT") -> List(Runaway(255155,6524,"00AK",Some(2500),Some(70),Some("GRVL"),false,false)),
-                                 Airport(46547,"IT-0003","small_airport","Field Sansepolcro",43.558502f,12.155771f,None,"IT") -> List(Runaway(254165,6525,"00AL",Some(2300),Some(200),Some("TURF"),false,false)),
-                                 Airport(298337,"IT-0004","small_airport","Aviosuperficie Eremo della Giubiliana",36.861286f,14.627008f,Some(1401),"IT") -> List(Runaway(270932,6526,"00AR",Some(40),Some(40),Some("GRASS"),false,false)))
+      val expected = Map(Airport(46181,"IT-0001","small_airport","PRATI NUOVI",45.268665f,7.947943f,Some(768),"IT") -> List(Runaway(269408,46181,"IT-0001" ,Some(80),Some(80),Some("ASPH-G"),true,false)),
+          Airport(46546,"IT-0002","small_airport","Senigalia Airstrip",43.738266f,13.1832075f,None,"IT") -> List(Runaway(255155,46546,"IT-0002",Some(2500),Some(70),Some("GRVL"),false,false)),
+          Airport(46547,"IT-0003","small_airport","Field Sansepolcro",43.558502f,12.155771f,None,"IT") -> List(Runaway(254165,46547,"IT-0003",Some(2300),Some(200),Some("TURF"),false,false), Runaway(270932,46547,"IT-0003",Some(40),Some(40),Some("GRASS"),false,false)),
+                                 Airport(298337,"IT-0004","small_airport","Aviosuperficie Eremo della Giubiliana",36.861286f,14.627008f,Some(1401),"IT") -> List())
 
       val result = Grouper.groupAirportsAndRunaways(airports, runaways)
 

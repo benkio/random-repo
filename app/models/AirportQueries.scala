@@ -13,8 +13,8 @@ object AirportQueries {
   import DatabaseSchema.runawaysTable
 
   // Based on the boolean return the orderby count arg with ascending or descending
-  def countOrdering(isDesc : Boolean) = {
-    if (isDesc) count() desc else count() asc
+  def countOrdering[T](column : TypedExpressionNode[T], isDesc : Boolean) = {
+    if (isDesc) count(column) desc else count(column) asc
   }
 
   def airportsByCountryCode(countryCode : String, offset : Int, pageLength: Int ) : Query[Airport] = from(airportsTable) {
@@ -26,7 +26,7 @@ object AirportQueries {
   }
 
   def getAirportDenseCountries(numberOfResult : Int, isDesc : Boolean) = join(countryTable, airportsTable.leftOuter) {
-    (country, airport) => groupBy(country.name) compute(count()) orderBy(countOrdering(isDesc)) on(Some(country.code) === airport.map(_.iso_country))
+    (country, airport) => groupBy(country.name) compute(count(airport.map(_.id))) orderBy(countOrdering(airport.map(_.id), isDesc)) on(Some(country.code) === airport.map(_.iso_country))
   }.page(0, numberOfResult)
 
   def airportInRunaways = from(airportsTable) {

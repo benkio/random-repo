@@ -83,7 +83,9 @@ class Database(cache: CacheApi) {
 
   // Return the number of airports by country with the specified order and number of results
   def getAirportDenseCountries(numberOfResult : Int, isDesc : Boolean) : Try[List[(String, Long)]] = cache.getOrElse[Try[List[(String, Long)]]]("airportDenseCountries" + numberOfResult + "orderingDesc" + isDesc) {
-    Try(inTransaction { AirportQueries.getAirportDenseCountries(numberOfResult, isDesc).toList map {t => (t.key, t.measures)}})
+    Try(inTransaction {
+          AirportQueries.getAirportDenseCountries(numberOfResult, isDesc).toList map {t => (t.key, t.measures)}
+        })
   }
 
   def runawaySurfaceAndAirportRef = Try(inTransaction {

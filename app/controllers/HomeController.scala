@@ -103,13 +103,7 @@ class HomeController @Inject() (cache: CacheApi) extends Controller {
 }
 
 object Grouper {
-  def groupAirportsAndRunaways( airports : List[Airport], runaways : List[Runaway]) : Map[Airport, Seq[Runaway]] = airports zip runaways groupBy {_._1} map {
-    case (a,l) => { a -> l.map {
-                     case (a,r) => r
-                   }
-    } } map {
-    case (a,r) => a -> r.toSeq
-  }
+  def groupAirportsAndRunaways( airports : List[Airport], runaways : List[Runaway]) : Map[Airport, Seq[Runaway]] = airports.map(a => a -> runaways.filter(r => r.airport_ref == a.id && r.airport_ident == a.ident) ) toMap
 
   def groupCountryCodeAndSurfaces(countryAndAirportID : Try[List[(String, Int)]], surfaceByAirportID : Try[List[org.squeryl.dsl.Group[Product2[Option[String],Int]]]]) : Try[Map[String, List[String]]] = {
     countryAndAirportID.flatMap(x =>

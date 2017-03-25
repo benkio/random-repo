@@ -7,6 +7,7 @@ import org.scalatest.prop._
 import play.api.test._
 import play.api.test.Helpers._
 import scala.util._
+import test.mock._
 
 import org.squeryl.PrimitiveTypeMode.inTransaction
 import org.squeryl.dsl._
@@ -14,17 +15,14 @@ import org.squeryl.dsl.ast._
 
 import play.api.cache._
 import play.api.mvc._
-import org.scalatest.mock.MockitoSugar
-import org.mockito.Mockito._
 
 import models._
 
-class QueriesTest extends PlaySpec with OneAppPerSuite with MockitoSugar {
+class QueriesTest extends PlaySpec with OneAppPerSuite {
 
   implicit override lazy val app = FakeApplication(additionalConfiguration = inMemoryDatabase())
 
-  val mockCacheAPI = mock[CacheApi]
-  val database = new Database(mockCacheAPI)
+  val database = new Database(new MockCacheApi)
 
   val countryCodeTestData = Map("IT" -> "Italy",
                                 "US" -> "United States",
@@ -100,15 +98,15 @@ class QueriesTest extends PlaySpec with OneAppPerSuite with MockitoSugar {
     }
 
     "getAirportDenseCountries method return a fixed number of results, has the same iso country and is sorted" in {
-      testWithData{ case (c, v) => {
-        val resultDesc : List[GroupWithMeasures[String, Long]] = inTransaction { AirportQueries.getAirportDenseCountries(pageLength, true).toList }
-        val resultAsc : List[GroupWithMeasures[String, Long]] = inTransaction { AirportQueries.getAirportDenseCountries(pageLength, false).toList }
+      val resultDesc : List[GroupWithMeasures[String, Long]] = inTransaction { AirportQueries.getAirportDenseCountries(pageLength, true).toList }
+      val resultAsc : List[GroupWithMeasures[String, Long]] = inTransaction { AirportQueries.getAirportDenseCountries(pageLength, false).toList }
 
-        resultAsc.length must be <= pageLength
-        resultDesc.length must be <= pageLength
-        (resultDesc.map(g => g.measures).reverse) mustBe sorted
-        (resultAsc.map(g => g.measures)) mustBe sorted
-      }}
+      resultAsc.length must be <= pageLength
+      resultDesc.length must be <= pageLength
+      (resultDesc.map(g => g.measures).reverse) mustBe sorted
+      (resultAsc.map(g => g.measures)) mustBe sorted
+      (resultAsc.map(g => g.measures)) must contain (0)
+
     }
 
     "airportByCountry must contain only test data country codes " in {
@@ -147,14 +145,10 @@ class QueriesTest extends PlaySpec with OneAppPerSuite with MockitoSugar {
       result.isSuccess mustBe true
       testWithData( t => (result.get.map(c => (c.code, c.name))) must contain (t) )
     }
-/*
-    THE MOCK OBJECT OF THE CACHE THROWS A NULLPOINTER EXCEPTION
+
     "getAirportDenseCountries must return a try, contain at Least US and be sorted" in {
       val resultMost = database.getAirportDenseCountries(10, true)
       val resultLess = database.getAirportDenseCountries(10, false)
-
-      println(resultMost)
-      println(resultLess)
 
       (resultMost) mustBe a [Try[_]]
       (resultMost.isSuccess) mustBe true
@@ -166,7 +160,7 @@ class QueriesTest extends PlaySpec with OneAppPerSuite with MockitoSugar {
       (resultLess.get.map(_._2)) mustBe sorted
 
     }
-
+/*
   SAME PROBLEM OF THE WHERE CLAUSE
     """airportRunawayQuery:
          - result must be a Try[_]
